@@ -61,21 +61,36 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
+      console.log("Registration attempt with data:", { 
+        username: req.body.username,
+        email: req.body.email,
+        fullName: req.body.fullName
+      });
+      
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
         return res.status(400).send("Username already exists");
       }
 
-      const user = await storage.createUser({
-        ...req.body,
-        password: await hashPassword(req.body.password),
-      });
+      try {
+        const user = await storage.createUser({
+          ...req.body,
+          password: await hashPassword(req.body.password),
+        });
 
-      req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(201).json(user);
-      });
-    } catch (error: any) {
+        req.login(user, (err) => {
+          if (err) {
+            console.error("Login error after registration:", err);
+            return next(err);
+          }
+          res.status(201).json(user);
+        });
+      } catch (dbError) {
+        console.error("Database error during user creation:", dbError);
+        res.status(500).send(`Database error: ${dbError.message}`);
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
       res.status(500).send(error.message);
     }
   });

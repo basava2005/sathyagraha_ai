@@ -1,6 +1,12 @@
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+
+// Add detailed error logging
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
 
 const app = express();
 
