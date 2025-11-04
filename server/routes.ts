@@ -253,9 +253,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete template (admin only)
   app.delete("/api/admin/templates/:id", requireAdmin, async (req, res) => {
     try {
+      console.log(`Attempting to delete template ${req.params.id}`);
+      const isInUse = await storage.isTemplateInUse(req.params.id);
+      console.log(`Template in use check: ${isInUse}`);
+      if (isInUse) {
+        console.log(`Template ${req.params.id} is in use, deleting associated documents.`);
+        await storage.deleteDocumentsByTemplateId(req.params.id);
+      }
+      
+      console.log(`Proceeding with deletion of template ${req.params.id}.`);
       await storage.deleteTemplate(req.params.id);
+      console.log(`Template ${req.params.id} deleted successfully.`);
       res.sendStatus(204);
     } catch (error: any) {
+      console.error(`Error deleting template ${req.params.id}:`, error);
       res.status(500).send(error.message);
     }
   });

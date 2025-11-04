@@ -17,7 +17,7 @@ import {
   type InsertLlmConfig,
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -37,6 +37,7 @@ export interface IStorage {
   createTemplate(template: InsertTemplate): Promise<Template>;
   updateTemplate(id: string, updates: Partial<Template>): Promise<Template | undefined>;
   deleteTemplate(id: string): Promise<void>;
+  isTemplateInUse(id: string): Promise<boolean>;
 
   // Document operations
   getAllDocuments(): Promise<Document[]>;
@@ -44,6 +45,7 @@ export interface IStorage {
   getDocument(id: string): Promise<Document | undefined>;
   createDocument(document: InsertDocument): Promise<Document>;
   updateDocument(id: string, updates: Partial<Document>): Promise<Document | undefined>;
+  deleteDocumentsByTemplateId(templateId: string): Promise<void>;
 
   // Consultation operations
   getAllConsultations(): Promise<Consultation[]>;
@@ -123,6 +125,11 @@ export class DatabaseStorage implements IStorage {
     return template || undefined;
   }
 
+  async isTemplateInUse(id: string): Promise<boolean> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(documents).where(eq(documents.templateId, id));
+    return result?.[0]?.count > 0;
+  }
+
   async deleteTemplate(id: string): Promise<void> {
     await db.delete(templates).where(eq(templates.id, id));
   }
@@ -157,6 +164,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(documents.id, id))
       .returning();
     return document || undefined;
+  }
+
+  async deleteDocumentsByTemplateId(templateId: string): Promise<void> {
+    await db.delete(documents).where(eq(documents.templateId, templateId));
   }
 
   // Consultation operations
