@@ -1,4 +1,4 @@
-import { Home, FileText, MessageSquare, User, Settings, Shield, LayoutTemplate } from "lucide-react";
+import { Home, FileText, MessageSquare, User, Settings, Shield, LayoutTemplate, FileSearch } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -34,6 +34,11 @@ export function AppSidebar() {
       title: "My Documents",
       url: "/documents",
       icon: LayoutTemplate,
+    },
+    {
+      title: "FIR Analyzer",
+      url: "/fir-analyzer",
+      icon: FileSearch,
     },
     {
       title: "Legal Consultation",

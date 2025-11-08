@@ -22,6 +22,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminTemplates from "@/pages/admin/templates";
 import AdminSettings from "@/pages/admin/settings";
+import FirAnalyzer from "@/pages/fir-analyzer";
 
 function Router() {
   return (
@@ -32,6 +33,7 @@ function Router() {
       <ProtectedRoute path="/templates/:id" component={TemplateForm} />
       <ProtectedRoute path="/documents" component={Documents} />
       <ProtectedRoute path="/consultation" component={ConsultationPage} />
+      <ProtectedRoute path="/fir-analyzer" component={FirAnalyzer} />
       <ProtectedRoute path="/profile" component={Profile} />
       <AdminRoute path="/admin" component={AdminDashboard} />
       <AdminRoute path="/admin/users" component={AdminUsers} />

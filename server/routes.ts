@@ -183,6 +183,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // === ANALYSIS ROUTES ===
+  app.post("/api/analysis/fir", requireAuth, async (req, res) => {
+    try {
+      const { content } = req.body;
+      if (!content || typeof content !== "string" || content.trim().length < 20) {
+        return res.status(400).send("Provide FIR text with at least 20 characters.");
+      }
+
+      function summarize(text: string) {
+        return (text || "").trim().slice(0, 400) + (text.length > 400 ? "..." : "");
+      }
+
+      function analyze(text: string) {
+        const lower = text.toLowerCase();
+
+        const issues: string[] = [];
+        const laws: { title: string; reference: string; notes?: string }[] = [];
+        const actions: string[] = [
+          "Visit nearest police station and lodge FIR under CrPC §154.",
+          "Collect and preserve evidence (photos, CCTV, chat logs, medical reports).",
+          "If police refuse FIR, approach Magistrate under CrPC §156(3).",
+          "If risk of arrest, consult counsel for anticipatory bail under CrPC §438.",
+          "Document witness names, dates, places, and sequence of events.",
+        ];
+
+        // Theft
+        if (/(steal|stole|theft|snatch|rob|burgl|stolen)/.test(lower)) {
+          issues.push("Alleged theft/robbery.");
+          laws.push({ title: "IPC §379 – Theft", reference: "Punishment for theft" });
+          laws.push({ title: "IPC §392 – Robbery", reference: "Aggravated form of theft with violence" });
+          actions.push("Provide item details, invoices, IMEI/serial numbers if available.");
+        }
+
+        // Assault / hurt
+        if (/(assault|beat|attack|hurt|injur|violence|fight|threat)/.test(lower)) {
+          issues.push("Physical assault or criminal intimidation.");
+          laws.push({ title: "IPC §323/324/325 – Hurt/Grievous Hurt", reference: "Causing hurt with/without weapons" });
+          laws.push({ title: "IPC §506 – Criminal Intimidation", reference: "Threats of injury" });
+          actions.push("Get medical examination; attach MLC report to complaint.");
+        }
+
+        // Sexual offences / harassment
+        if (/(harass|molest|outrag|eve tease|sexual|stalk)/.test(lower)) {
+          issues.push("Sexual harassment/stalking.");
+          laws.push({ title: "IPC §354 – Outraging modesty", reference: "Assault/criminal force on woman" });
+          laws.push({ title: "IPC §354A/354D – Sexual harassment/Stalking", reference: "Prohibits persistent following/contact" });
+          actions.push("Record incidents chronologically; preserve messages/calls as evidence.");
+        }
+
+        // Cheating / fraud
+        if (/(fraud|cheat|scam|deceiv|fake|forg|investment)/.test(lower)) {
+          issues.push("Cheating/fraud/forgery.");
+          laws.push({ title: "IPC §420 – Cheating", reference: "Dishonest inducement causing delivery of property" });
+          laws.push({ title: "IPC §465/468 – Forgery", reference: "Making false documents" });
+          actions.push("Attach bank statements, receipts, contracts, and communication records.");
+        }
+
+        // Cyber offences
+        if (/(online|cyber|email|otp|upi|account|password|hacked|identity|impersonat)/.test(lower)) {
+          issues.push("Cyber offence/identity theft.");
+          laws.push({ title: "IT Act §66C – Identity Theft", reference: "Fraudulent use of credentials" });
+          laws.push({ title: "IT Act §66D – Cheating by personation", reference: "Online impersonation scams" });
+          actions.push("Report to cyber cell; preserve call recordings, emails, UPI IDs, transaction IDs.");
+        }
+
+        // Dowry / domestic cruelty
+        if (/(dowry|cruelty|domestic|husband|in laws|marriage)/.test(lower)) {
+          issues.push("Domestic cruelty/dowry harassment.");
+          laws.push({ title: "IPC §498A – Cruelty by husband or relatives", reference: "Physical/mental cruelty" });
+          laws.push({ title: "Dowry Prohibition Act", reference: "Illegal demand of dowry" });
+          actions.push("Keep records of demands, messages, medical reports; seek protection orders if needed.");
+        }
+
+        // Constitutional/CrPC references
+        laws.push({ title: "CrPC §154 – FIR", reference: "Information relating to cognizable offence" });
+        laws.push({ title: "CrPC §156(3) – Magistrate", reference: "Direction to investigate if police refuse FIR" });
+        laws.push({ title: "CrPC §438 – Anticipatory Bail", reference: "Protection against arrest" });
+        laws.push({ title: "Constitution Art. 21 – Right to Life", reference: "Fair procedure and personal liberty" });
+
+        const confidence = Math.min(0.95, Math.max(0.5, issues.length / 6));
+
+        return {
+          summary: summarize(text),
+          relevantLaws: laws,
+          issues,
+          recommendedActions: Array.from(new Set(actions)),
+          confidence,
+        };
+      }
+
+      let analysis = analyze(content);
+
+      // Optional LLM refinement (if configured)
+      try {
+        const llmConfig = await storage.getLlmConfig();
+        if (llmConfig?.endpoint) {
+          // Placeholder: integrate with custom LLM endpoint if available
+          // analysis.summary = analysis.summary + " (LLM refinement available)";
+        }
+      } catch (_) {
+        // ignore LLM failures; return rule-based analysis
+      }
+
+      res.json(analysis);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
   // === ADMIN ROUTES ===
   // Get all users (admin only)
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
