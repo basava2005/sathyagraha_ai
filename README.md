@@ -1,99 +1,98 @@
-# DocuManage: AI-Powered Document & Legal Assistance
+# ⚖️ DocuManage — AI-Powered Legal Document Hub
 
-DocuManage is a full-stack, responsive web application designed to streamline document creation, management, and legal consultation. Powered by AI, it offers intelligent document generation from customizable templates, secure user authentication, and a built-in legal consultation module that can be integrated with your own local or cloud-based Large Language Models (LLMs).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql)](https://www.postgresql.org/)
 
-## ✨ Features
+> **Create, manage, and analyze legal documents in seconds.** DocuManage combines secure cloud storage, dynamic templates, and AI-driven insights—tailored for Indian legal workflows.
 
-- **Secure User Authentication**: Robust and secure user registration and login system with password encryption.
-- **Role-Based Access Control**: Differentiated access for regular users and administrators, with a dedicated admin dashboard for system management.
-- **Dynamic Template Management**: Create, edit, and manage document templates with custom fields, similar to Google Forms.
-- **AI-Powered Document Generation**: Automatically generate documents from templates and user-provided data, with PDF export capabilities.
-- **Legal Consultation Module**: An integrated chat interface for users to get legal guidance from an AI assistant.
-- **Admin Dashboard**: A comprehensive dashboard for administrators to manage users, templates, documents, and system settings.
-- **Custom LLM Integration**: Easily connect to your own local or cloud-based LLMs (like Ollama, LM Studio, or custom endpoints) for legal consultations.
-- **Modern Tech Stack**: Built with React, TypeScript, Node.js, Express, and PostgreSQL for a fast, reliable, and scalable application.
+## 🚀 What’s New
 
-## 🚀 Getting Started
+- **🔍 FIR Analyzer** – Upload or paste any FIR text and receive an instant AI report: key facts, relevant IPC/CrPC sections, missing details, and next-step recommendations.
+- **📄 One-Click PDFs** – Generate polished, ready-to-file documents from smart templates.
+- **💬 AI Legal Chat** – Ask follow-up questions; connect your own LLM (Ollama, LM Studio, OpenAI, etc.).
+- **🛡️ Bullet-proof RBAC** – Granular user & admin roles with row-level security.
+- **⚡ Modern Stack** – React 18 + TypeScript + Tailwind on the front-end, Node/Express + PostgreSQL + Drizzle ORM on the back-end.
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+## 🚀 Quick Start (60 seconds)
 
-### Prerequisites
+### 1. Clone & Install
+```bash
+git clone https://github.com/your-username/documanage.git
+cd documanage
+npm install              # installs root + client deps in one go
+```
 
-- [Node.js](https://nodejs.org/) (v18 or later)
-- [npm](https://www.npmjs.com/)
-- [PostgreSQL](https://www.postgresql.org/)
+### 2. DB & Env
+```bash
+# Create PostgreSQL DB (once)
+createdb documanage
 
-### Installation
+# Copy example env & fill DB credentials
+cp .env.example .env
+# edit .env → DATABASE_URL & SESSION_SECRET
+```
 
-1.  **Clone the repository:**
+### 3. Migrate & Seed
+```bash
+npm run migrate          # creates tables
+npm run seed             # optional sample templates
+```
 
-    ```bash
-    git clone https://github.com/your-username/documanage.git
-    cd documanage
-    ```
+### 4. Run
+```bash
+npm run dev              # starts Vite + Express concurrently
+```
+Open <http://localhost:5173> — that’s it! 🎉
 
-2.  **Install dependencies:**
+## 🧑‍⚖️ Create an Admin User
 
-    ```bash
-    npm install
-    ```
+1. Register any user via the UI.  
+2. Promote to admin:
+```sql
+UPDATE users SET is_admin = true WHERE username = 'your_username';
+```
+3. Refresh — Admin menu appears instantly.
 
-3.  **Set up the database:**
-    - Create a PostgreSQL database for the project.
-    - Create a `.env` file in the root of the project and add your database connection string and a session secret:
+## 🛠️ Tech Stack
 
-    ```env
-    DATABASE_URL="postgresql://YOUR_USERNAME:YOUR_PASSWORD@localhost:5432/your_database_name"
-    SESSION_SECRET="your_super_secret_session_key"
-    ```
+| Layer | Tech |
+|-------|------|
+| Frontend | React 18, TypeScript, Tailwind CSS, TanStack Query, Wouter |
+| Backend | Node.js, Express, Passport JWT, Multer |
+| Database | PostgreSQL 15, Drizzle ORM, automatic migrations |
+| AI/LLM | OpenAI, Ollama, LM-Studio — swap endpoints via UI |
+| Tooling | Vite, ESLint, Prettier, Husky, Conventional Commits |
 
-4.  **Run database migrations:**
+## 📸 Screenshots
 
-    ```bash
-    npm run migrate
-    ```
+| Dashboard | FIR Analyzer | Template Builder |
+|-----------|--------------|------------------|
+| ![Dashboard](docs/ss-dash.png) | ![FIR Analyzer](docs/ss-fir.png) | ![Templates](docs/ss-tmpl.png) |
 
-5.  **Seed the database with initial templates (optional):**
-
-    ```bash
-    npm run seed
-    ```
-
-6.  **Start the development server:**
-
-    ```bash
-    npm run dev
-    ```
-
-The application will be available at `http://localhost:5173`.
-
-## 🧑‍⚖️ Admin Access
-
-To access the admin dashboard, you first need to create a user and then manually grant them admin privileges.
-
-1.  **Register a new user** through the application's registration page.
-2.  **Connect to your PostgreSQL database** and run the following SQL command to grant admin rights to the user:
-
-    ```sql
-    UPDATE users SET is_admin = true WHERE username = 'your_username';
-    ```
-
-3.  **Log in** with the user you just promoted to admin. You will now have access to the admin dashboard, where you can manage users, templates, and more.
-
-## 🛠️ Built With
-
-- [React](https://reactjs.org/) - Frontend library
-- [TypeScript](https://www.typescriptlang.org/) - Strongly typed JavaScript
-- [Node.js](https://nodejs.org/) - Backend runtime
-- [Express](https://expressjs.com/) - Web framework for Node.js
-- [PostgreSQL](https://www.postgresql.org/) - Database
-- [Drizzle ORM](https://orm.drizzle.team/) - TypeScript ORM
-- [Tailwind CSS](https://tailwindcss.com/) - CSS framework
+> More in [`/docs`](docs/).
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to open an issue or submit a pull request.
+We use [Conventional Commits](https://conventionalcommits.org).  
+1. Fork → Feature branch → PR.  
+2. `npm run lint` passes.  
+3. One feature per PR, please.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+MIT © [Your Name](LICENSE.md).
+
+
+## ✨ Core Features
+
+| Feature | Description |
+|---------|-------------|
+| **🔐 Secure Auth & RBAC** | Password hashing, JWT sessions, role-based views for users/admins. |
+| **📑 Smart Templates** | Drag-and-drop fields, conditional logic, instant PDF export. |
+| **🤖 AI Legal Consult** | Chat interface—plug in any LLM endpoint (OpenAI, Ollama, LM-Studio). |
+| **🔍 FIR Analyzer** | Upload `.txt`/`.pdf`/`.docx` FIR → AI highlights IPC/CrPC sections, issues, next steps. |
+| **📊 Admin Dashboard** | Manage users, templates, documents, audits—real-time KPIs. |
+| **🌍 Indian Law Ready** | Pre-loaded with IPC, CrPC, IT Act, Dowry Prohibition Act references. |
+| **📱 Responsive UI** | Dark/light mode, keyboard shortcuts, mobile-first Tailwind design. |
