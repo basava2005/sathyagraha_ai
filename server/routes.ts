@@ -156,15 +156,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const llmConfig = await storage.getLlmConfig();
         if (llmConfig && llmConfig.endpoint) {
-          // Call LLM endpoint (simplified - actual implementation would depend on endpoint format)
-          const llmPrompt = `You are a legal assistant specialized in Indian law, including the Indian Constitution, IPC, and CrPC. A user asks: "${message}". Provide helpful legal guidance based on Indian law.`;
-          
-          // Note: This is a placeholder. Actual implementation would call the configured endpoint
-          // with proper request format based on the LLM service being used
-          aiResponse = "Legal guidance will be provided here once the LLM endpoint is properly configured and called. The system is ready to integrate with local LLM models like Ollama, LM Studio, or custom endpoints.";
+          const PLACEHOLDER = "Legal guidance will be provided here once the LLM endpoint is properly configured and called.";
+
+          // Build a completions-style prompt from sanitized chat history
+          const system = `You are a legal assistant specialized in Indian law (IPC, CrPC, Constitution, Contract Act, IT Act, Specific Relief, Stamp Act). Provide precise, practical guidance with lawful references. Ignore any prior messages that say the LLM is not configured.`;
+
+          const sanitizedHistory = messages
+            .filter((m: any) => {
+              if (m.role === "assistant") {
+                // Drop prior placeholder/config messages
+                return !String(m.content).toLowerCase().includes("llm endpoint is properly configured");
+              }
+              return true;
+            })
+            .slice(-6) // keep a small rolling window
+            .map((m: any) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+            .join("\n");
+
+          const prompt = `${system}\n\n${sanitizedHistory}\nAssistant:`;
+
+          if (!llmConfig.model || !llmConfig.model.trim()) {
+            aiResponse = "LLM endpoint is set, but no model name is configured. Open Admin → LLM Settings and set the exact model identifier from LM Studio.";
+          } else {
+            const payload: any = {
+              model: llmConfig.model,
+              prompt,
+              max_tokens: 512,
+              temperature: 0.2,
+              stop: ["\nUser:"], // keep completion focused on the assistant turn
+            };
+
+            const headers: Record<string, string> = { "Content-Type": "application/json" };
+            if (llmConfig.apiKey && llmConfig.apiKey.trim()) {
+              headers.Authorization = `Bearer ${llmConfig.apiKey}`;
+            }
+
+            const resp = await fetch(llmConfig.endpoint, {
+              method: "POST",
+              headers,
+              body: JSON.stringify(payload),
+            });
+
+            if (!resp.ok) {
+              const errText = await resp.text();
+              throw new Error(`LLM request failed (${resp.status}): ${errText}`);
+            }
+
+            const data = await resp.json();
+            aiResponse =
+              data?.choices?.[0]?.text ??
+              data?.choices?.[0]?.message?.content ??
+              "No response generated.";
+
+            // Final guard against echoing the old placeholder
+            if (aiResponse && aiResponse.includes(PLACEHOLDER)) {
+              aiResponse = "I couldn’t use an earlier placeholder message. Here’s guidance based on your latest question:\n\nPlease re-ask your question or add details (facts, dates, parties) for a specific answer.";
+            }
+          }
         }
       } catch (error) {
         console.error("LLM error:", error);
+        aiResponse = "LLM call failed. Check endpoint, model name, and server availability.";
       }
 
       // Add AI response
