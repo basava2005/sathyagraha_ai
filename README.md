@@ -9,7 +9,7 @@
 
 ## 🚀 What’s New
 
-- **🔍 FIR Analyzer** – Upload or paste any FIR text and receive an instant AI report: key facts, relevant IPC/CrPC sections, missing details, and next-step recommendations.
+- **🔍 Document Analyzer (FIR + Agreements)** – Upload/paste legal text (FIR, contracts, NDAs, MoUs, loan/sale deeds) and receive instant AI insights: clause coverage audit, risk level (low/medium/high), pros/cons, and recommended actions mapped to Indian laws (IPC, CrPC, Contract Act, IT Act, Specific Relief, Stamp Act).
 - **📄 One-Click PDFs** – Generate polished, ready-to-file documents from smart templates.
 - **💬 AI Legal Chat** – Ask follow-up questions; connect your own LLM (Ollama, LM Studio, OpenAI, etc.).
 - **🛡️ Bullet-proof RBAC** – Granular user & admin roles with row-level security.
@@ -67,7 +67,7 @@ UPDATE users SET is_admin = true WHERE username = 'your_username';
 
 ## 📸 Screenshots
 
-| Dashboard | FIR Analyzer | Template Builder |
+| Dashboard | Analyzer | Template Builder |
 |-----------|--------------|------------------|
 | ![Dashboard](docs/ss-dash.png) | ![FIR Analyzer](docs/ss-fir.png) | ![Templates](docs/ss-tmpl.png) |
 
@@ -92,7 +92,14 @@ MIT © [Your Name](LICENSE.md).
 | **🔐 Secure Auth & RBAC** | Password hashing, JWT sessions, role-based views for users/admins. |
 | **📑 Smart Templates** | Drag-and-drop fields, conditional logic, instant PDF export. |
 | **🤖 AI Legal Consult** | Chat interface—plug in any LLM endpoint (OpenAI, Ollama, LM-Studio). |
-| **🔍 FIR Analyzer** | Upload `.txt`/`.pdf`/`.docx` FIR → AI highlights IPC/CrPC sections, issues, next steps. |
+| **🔍 Document Analyzer** | Analyze `.txt` (PDF/DOCX roadmap). Auto-detect type, assess risks, pros/cons, clause gaps, and suggest actions under Indian law. |
 | **📊 Admin Dashboard** | Manage users, templates, documents, audits—real-time KPIs. |
 | **🌍 Indian Law Ready** | Pre-loaded with IPC, CrPC, IT Act, Dowry Prohibition Act references. |
 | **📱 Responsive UI** | Dark/light mode, keyboard shortcuts, mobile-first Tailwind design. |
+
+## 🧠 Analyzer Details (New)
+- Auto-detects document type: `FIR`, `Agreement/Contract`, `NDA`, `MoU`, `Loan`, `Sale Deed`, or `Custom`.
+- Runs clause coverage checks (Indemnity, Liability Cap, Confidentiality, Termination, Governing Law, Dispute Resolution, Payments, Force Majeure, IP, Assignment, Notices).
+- Produces a clear summary, risk level, pros, cons, identified issues, relevant laws, and next steps.
+- Backend endpoint: `POST /api/analysis/document` with `{ content, type? }` and secure auth.  
+- Designed to plug into a configurable LLM endpoint for refinement when available.

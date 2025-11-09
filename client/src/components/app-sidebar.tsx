@@ -36,7 +36,7 @@ export function AppSidebar() {
       icon: LayoutTemplate,
     },
     {
-      title: "FIR Analyzer",
+      title: "Analyzer",
       url: "/fir-analyzer",
       icon: FileSearch,
     },
