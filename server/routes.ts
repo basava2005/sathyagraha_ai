@@ -156,67 +156,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const llmConfig = await storage.getLlmConfig();
         if (llmConfig && llmConfig.endpoint) {
-          const PLACEHOLDER = "Legal guidance will be provided here once the LLM endpoint is properly configured and called.";
-
+          const PLACEHOLDER_SUBSTRING = "endpoint is properly configured";
+      
           // Build a completions-style prompt from sanitized chat history
-          const system = `You are a legal assistant specialized in Indian law (IPC, CrPC, Constitution, Contract Act, IT Act, Specific Relief, Stamp Act). Provide precise, practical guidance with lawful references. Ignore any prior messages that say the LLM is not configured.`;
-
+          const system = `You are a legal assistant specialized in Indian law (IPC, CrPC, Constitution, Contract Act, IT Act, Specific Relief, Stamp Act). Provide precise, practical guidance with lawful references.`;
+      
           const sanitizedHistory = messages
             .filter((m: any) => {
               if (m.role === "assistant") {
                 // Drop prior placeholder/config messages
-                return !String(m.content).toLowerCase().includes("llm endpoint is properly configured");
+                return !String(m.content).includes(PLACEHOLDER_SUBSTRING);
               }
               return true;
             })
-            .slice(-6) // keep a small rolling window
-            .map((m: any) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
-            .join("\n");
-
-          const prompt = `${system}\n\n${sanitizedHistory}\nAssistant:`;
-
+            .slice(-6); // keep a small rolling window
+      
+          let prompt = `<s>[INST] ${system} [/INST]Understood.</s>`;
+          sanitizedHistory.forEach((msg) => {
+            if (msg.role === "user") {
+              prompt += `[INST] ${msg.content} [/INST]`;
+            } else if (msg.role === "assistant") {
+              prompt += `${msg.content}</s>`;
+            }
+          });
+      
           if (!llmConfig.model || !llmConfig.model.trim()) {
-            aiResponse = "LLM endpoint is set, but no model name is configured. Open Admin → LLM Settings and set the exact model identifier from LM Studio.";
+            aiResponse =
+              "LLM endpoint is set, but no model name is configured. Open Admin → LLM Settings and set the exact model identifier from LM Studio.";
           } else {
             const payload: any = {
               model: llmConfig.model,
               prompt,
               max_tokens: 512,
               temperature: 0.2,
-              stop: ["\nUser:"], // keep completion focused on the assistant turn
+              stop: ["</s>", "[INST]"], // stop at end of assistant turn or next user turn
             };
-
+      
             const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (llmConfig.apiKey && llmConfig.apiKey.trim()) {
               headers.Authorization = `Bearer ${llmConfig.apiKey}`;
             }
-
-            const resp = await fetch(llmConfig.endpoint, {
+      
+            // Normalize endpoint to ensure /v1/completions is present
+            const targetUrl = llmConfig.endpoint.includes("/v1/completions")
+              ? llmConfig.endpoint
+              : llmConfig.endpoint.replace(/\/$/, "") + "/v1/completions";
+      
+            const resp = await fetch(targetUrl, {
               method: "POST",
               headers,
               body: JSON.stringify(payload),
             });
-
+      
+            const contentType = resp.headers.get("content-type") || "";
+      
             if (!resp.ok) {
-              const errText = await resp.text();
-              throw new Error(`LLM request failed (${resp.status}): ${errText}`);
+              const errText = contentType.includes("application/json")
+                ? JSON.stringify(await resp.json())
+                : await resp.text();
+              throw new Error(`LLM request failed (${resp.status}): ${errText.slice(0, 300)}`);
             }
-
-            const data = await resp.json();
+      
+            const data = contentType.includes("application/json")
+              ? await resp.json()
+              : JSON.parse(await resp.text());
+      
             aiResponse =
-              data?.choices?.[0]?.text ??
-              data?.choices?.[0]?.message?.content ??
+              data?.choices?.[0]?.text?.trim() ??
+              data?.choices?.[0]?.message?.content?.trim() ??
               "No response generated.";
-
-            // Final guard against echoing the old placeholder
-            if (aiResponse && aiResponse.includes(PLACEHOLDER)) {
-              aiResponse = "I couldn’t use an earlier placeholder message. Here’s guidance based on your latest question:\n\nPlease re-ask your question or add details (facts, dates, parties) for a specific answer.";
-            }
           }
         }
       } catch (error) {
         console.error("LLM error:", error);
-        aiResponse = "LLM call failed. Check endpoint, model name, and server availability.";
+        aiResponse = `LLM call failed. ${error instanceof Error ? error.message : ""}`.trim();
       }
 
       // Add AI response
