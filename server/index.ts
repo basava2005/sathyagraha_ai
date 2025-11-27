@@ -23,15 +23,24 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false }));
 
-// Add CORS for Netlify/Render + local dev
+// CORS: allow Netlify + local dev and include credentials
 app.use(
   cors({
-    origin: [
-      "http://localhost:5000",
-      "http://localhost:5173",
-      process.env.CLIENT_ORIGIN, // e.g. https://your-site.netlify.app
-    ].filter(Boolean) as string[],
+    origin: (origin, cb) => {
+      const allowed = [
+        "http://localhost:5000",
+        "http://localhost:5173",
+        process.env.CLIENT_ORIGIN, // e.g. https://sathyagrahai.netlify.app
+      ].filter(Boolean) as string[];
+
+      if (!origin) return cb(null, true);
+      const ok =
+        allowed.includes(origin) ||
+        (typeof origin === "string" && origin.endsWith(".netlify.app"));
+      cb(null, ok);
+    },
     credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
 
