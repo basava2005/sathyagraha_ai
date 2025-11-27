@@ -158,19 +158,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (llmConfig && llmConfig.endpoint) {
           const PLACEHOLDER_SUBSTRING = "endpoint is properly configured";
       
-          // Build a completions-style prompt from sanitized chat history
           const system = `You are a legal assistant specialized in Indian law (IPC, CrPC, Constitution, Contract Act, IT Act, Specific Relief, Stamp Act). Provide precise, practical guidance with lawful references.`;
       
           const sanitizedHistory = messages
-            .filter((m: any) => {
-              if (m.role === "assistant") {
-                // Drop prior placeholder/config messages
-                return !String(m.content).includes(PLACEHOLDER_SUBSTRING);
-              }
-              return true;
-            })
-            .slice(-6); // keep a small rolling window
+            .filter((m: any) => (m.role === "assistant" ? !String(m.content).includes(PLACEHOLDER_SUBSTRING) : true))
+            .slice(-6);
       
+          // Build both forms: prompt and chat messages
           let prompt = `<s>[INST] ${system} [/INST]Understood.</s>`;
           sanitizedHistory.forEach((msg) => {
             if (msg.role === "user") {
@@ -180,27 +174,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           });
       
+          const chatMessages = [
+            { role: "system", content: system },
+            ...sanitizedHistory.map((m: any) => ({ role: m.role, content: m.content })),
+            { role: "user", content: message },
+          ];
+      
           if (!llmConfig.model || !llmConfig.model.trim()) {
-            aiResponse =
-              "LLM endpoint is set, but no model name is configured. Open Admin → LLM Settings and set the exact model identifier from LM Studio.";
+            aiResponse = "LLM endpoint is set, but no model name is configured. Open Admin → LLM Settings and set the exact model identifier.";
           } else {
-            const payload: any = {
-              model: llmConfig.model,
-              prompt,
-              max_tokens: 512,
-              temperature: 0.2,
-              stop: ["</s>", "[INST]"], // stop at end of assistant turn or next user turn
-            };
+            // Normalize endpoint: respect provided /chat/completions or /completions; default to /chat/completions if only /v1 given
+            const endpointBase = llmConfig.endpoint.trim().replace(/\/+$/, "");
+            const hasCompletions = /\/(chat\/)?completions$/.test(endpointBase);
+            const endsWithV1 = /\/v1$/.test(endpointBase);
+            const targetUrl = hasCompletions
+              ? endpointBase
+              : endsWithV1
+              ? `${endpointBase}/chat/completions`
+              : endpointBase; // use as-is (provider specific)
+      
+            const isChatCompletions = /chat\/completions$/.test(targetUrl);
+      
+            const payload = isChatCompletions
+              ? {
+                  model: llmConfig.model,
+                  messages: chatMessages,
+                  temperature: 0.2,
+                }
+              : {
+                  model: llmConfig.model,
+                  prompt,
+                  max_tokens: 512,
+                  temperature: 0.2,
+                  stop: ["</s>", "[INST]"],
+                };
       
             const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (llmConfig.apiKey && llmConfig.apiKey.trim()) {
               headers.Authorization = `Bearer ${llmConfig.apiKey}`;
             }
-      
-            // Normalize endpoint to ensure /v1/completions is present
-            const targetUrl = llmConfig.endpoint.includes("/v1/completions")
-              ? llmConfig.endpoint
-              : llmConfig.endpoint.replace(/\/$/, "") + "/v1/completions";
       
             const resp = await fetch(targetUrl, {
               method: "POST",
@@ -209,7 +221,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
       
             const contentType = resp.headers.get("content-type") || "";
-      
             if (!resp.ok) {
               const errText = contentType.includes("application/json")
                 ? JSON.stringify(await resp.json())
@@ -222,8 +233,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               : JSON.parse(await resp.text());
       
             aiResponse =
-              data?.choices?.[0]?.text?.trim() ??
               data?.choices?.[0]?.message?.content?.trim() ??
+              data?.choices?.[0]?.text?.trim() ??
               "No response generated.";
           }
         }
