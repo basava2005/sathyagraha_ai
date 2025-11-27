@@ -191,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ? endpointBase
               : endsWithV1
               ? `${endpointBase}/chat/completions`
-              : endpointBase; // use as-is (provider specific)
+              : endpointBase; // provider-specific; use as-is
       
             const isChatCompletions = /chat\/completions$/.test(targetUrl);
       
