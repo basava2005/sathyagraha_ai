@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import cors from "cors";
 
 // Add detailed error logging
 process.on('unhandledRejection', (reason, promise) => {
@@ -21,6 +22,18 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: false }));
+
+// Add CORS for Netlify/Render + local dev
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5000",
+      "http://localhost:5173",
+      process.env.CLIENT_ORIGIN, // e.g. https://your-site.netlify.app
+    ].filter(Boolean) as string[],
+    credentials: true,
+  })
+);
 
 app.use((req, res, next) => {
   const start = Date.now();

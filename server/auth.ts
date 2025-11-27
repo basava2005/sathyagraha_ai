@@ -35,6 +35,11 @@ export function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    // Cross-site cookies in production (Netlify frontend + Render backend)
+    cookie: {
+      sameSite: app.get("env") === "production" ? "none" : "lax",
+      secure: app.get("env") === "production",
+    },
   };
 
   app.set("trust proxy", 1);
