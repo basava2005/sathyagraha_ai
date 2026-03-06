@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Scale, Shield, FileText, Loader2 } from "lucide-react";
-import logoUrl from "@assets/logo12_1761193592383.png";
+const logoUrl = "/favicon.png";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema, InsertUser } from "@shared/schema";
