@@ -13,7 +13,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/use-auth";
-import logoUrl from "@assets/logo12_1761193592383.png";
+const logoUrl = "/favicon.png";
 
 export function AppSidebar() {
   const [location] = useLocation();
