@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 // Pages
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
+import ContactPage from "@/pages/contact";
 import Dashboard from "@/pages/dashboard";
 import Templates from "@/pages/templates";
 import TemplateForm from "@/pages/template-form";
@@ -28,6 +29,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
+      <Route path="/contact" component={ContactPage} />
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/templates" component={Templates} />
       <ProtectedRoute path="/templates/:id" component={TemplateForm} />

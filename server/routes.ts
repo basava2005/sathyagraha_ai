@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { generatePDF } from "./pdf-generator";
+import nodemailer from "nodemailer";
 
 // Middleware to check if user is authenticated
 function requireAuth(req: any, res: any, next: any) {
@@ -400,6 +401,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (_) {}
 
       res.json(analysis);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // === CONTACT ROUTE (public) ===
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const { name, email, phone, subject, message } = req.body || {};
+      if (!name || !email || !message) {
+        return res.status(400).send("name, email and message are required");
+      }
+
+      const contact = await storage.createContact({ name, email, phone, subject, message, status: "new" });
+
+      const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, CONTACT_TO } = process.env as Record<string, string | undefined>;
+      if (SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS && CONTACT_TO) {
+        const transporter = nodemailer.createTransport({
+          host: SMTP_HOST,
+          port: Number(SMTP_PORT),
+          secure: Number(SMTP_PORT) === 465,
+          auth: { user: SMTP_USER, pass: SMTP_PASS },
+        });
+
+        await transporter.sendMail({
+          from: `Contact Form <${SMTP_USER}>`,
+          to: CONTACT_TO,
+          replyTo: email,
+          subject: subject ? `[Contact] ${subject}` : "New Contact Form Submission",
+          text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || "-"}\nMessage:\n${message}`,
+        });
+      }
+
+      res.status(201).json({ id: contact.id });
     } catch (error: any) {
       res.status(500).send(error.message);
     }

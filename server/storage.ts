@@ -5,6 +5,7 @@ import {
   documents,
   consultations,
   llmConfig,
+  contacts,
   type User,
   type InsertUser,
   type Template,
@@ -15,6 +16,8 @@ import {
   type InsertConsultation,
   type LlmConfig,
   type InsertLlmConfig,
+  type Contact,
+  type InsertContact,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
@@ -53,6 +56,9 @@ export interface IStorage {
   getConsultation(id: string): Promise<Consultation | undefined>;
   createConsultation(consultation: InsertConsultation): Promise<Consultation>;
   updateConsultation(id: string, updates: Partial<Consultation>): Promise<Consultation | undefined>;
+
+  // Contact operations
+  createContact(contact: InsertContact): Promise<Contact>;
 
   // LLM Config operations
   getLlmConfig(): Promise<LlmConfig | undefined>;
@@ -200,6 +206,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(consultations.id, id))
       .returning();
     return consultation || undefined;
+  }
+
+  // Contact operations
+  async createContact(insertContact: InsertContact): Promise<Contact> {
+    const [contact] = await db.insert(contacts).values(insertContact).returning();
+    return contact;
   }
 
   // LLM Config operations

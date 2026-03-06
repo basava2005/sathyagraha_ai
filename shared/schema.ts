@@ -62,6 +62,18 @@ export const llmConfig = pgTable("llm_config", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Contact messages (public Contact Us form)
+export const contacts = pgTable("contacts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  subject: text("subject"),
+  message: text("message").notNull(),
+  status: text("status").notNull().default("new"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   documents: many(documents),
@@ -124,6 +136,11 @@ export const insertLlmConfigSchema = createInsertSchema(llmConfig).omit({
   updatedAt: true,
 });
 
+export const insertContactSchema = createInsertSchema(contacts).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -139,3 +156,6 @@ export type Consultation = typeof consultations.$inferSelect;
 
 export type InsertLlmConfig = z.infer<typeof insertLlmConfigSchema>;
 export type LlmConfig = typeof llmConfig.$inferSelect;
+
+export type InsertContact = z.infer<typeof insertContactSchema>;
+export type Contact = typeof contacts.$inferSelect;
