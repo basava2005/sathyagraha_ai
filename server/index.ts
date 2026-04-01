@@ -30,13 +30,14 @@ app.use(
       const allowed = [
         "http://localhost:5000",
         "http://localhost:5173",
+        "https://sathyagrahaai.me",
         process.env.CLIENT_ORIGIN, // e.g. https://sathyagrahai.netlify.app
       ].filter(Boolean) as string[];
 
       if (!origin) return cb(null, true);
       const ok =
         allowed.includes(origin) ||
-        (typeof origin === "string" && origin.endsWith(".netlify.app"));
+        (typeof origin === "string" && (origin.endsWith(".netlify.app") || origin.endsWith("sathyagrahaai.me")));
       cb(null, ok);
     },
     credentials: true,

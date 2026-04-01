@@ -135,9 +135,17 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground space-y-1">
           <p>Empowering Justice</p>
           <p>Through Truth and Technology</p>
+          <a 
+            href="https://sathyagrahaai.me" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="block text-primary hover:underline font-medium mt-1"
+          >
+            sathyagrahaai.me
+          </a>
         </div>
       </SidebarFooter>
     </Sidebar>
